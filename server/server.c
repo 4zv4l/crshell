@@ -37,6 +37,7 @@ ssize_t execute(char* buff, ssize_t len) {
 	while((c = fgetc(fp))!=EOF) {
 		buff[counter] = c;
 		counter += 1;
+        if(counter == MAX) break;
 	}
 
 	// close the pipe
