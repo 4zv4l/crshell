@@ -12,34 +12,34 @@
 static ssize_t
 execute(char* cmd, ssize_t len, int connfd) {
 
-	// allow to change the process directory
-	if(strncmp(cmd, "cd", 2) == 0) {
-		char *path = cmd+3; // cmd+3 => skip this ['c', 'd', ' '] /!\ pointers
-		if(chdir(path)!=0) {
+    // allow to change the process directory
+    if(strncmp(cmd, "cd", 2) == 0) {
+        char *path = cmd+3; // cmd+3 => skip this ['c', 'd', ' '] /!\ pointers
+        if(chdir(path)!=0) {
             return 0;
-		}
-		size_t l = snprintf(cmd, MAX, "changed dir with success\n");
+        }
+        size_t l = snprintf(cmd, MAX, "changed dir with success\n");
         write(connfd, cmd, l);
         write(connfd, EOC, sizeof(EOC));
         return 1;
-	}
+    }
 
-	// open a pipe running the command
-	FILE* fp = popen(cmd, "r");
-	if (!fp) {
-		return 0;
-	}
+    // open a pipe running the command
+    FILE* fp = popen(cmd, "r");
+    if (!fp) {
+        return 0;
+    }
 
-	// count how many char is read
-	ssize_t counter = 0;
+    // count how many char is read
+    ssize_t counter = 0;
 
-	// read stdout from pipe
+    // read stdout from pipe
     // send it to the client
-	int c;
-	char buff[MAX] = {0};
-	while((c = fgetc(fp))!=EOF) {
-		buff[counter] = c;
-		counter += 1;
+    int c;
+    char buff[MAX] = {0};
+    while((c = fgetc(fp))!=EOF) {
+        buff[counter] = c;
+        counter += 1;
         if(counter == MAX) {
             write(connfd, buff, counter);
             counter = 0;
