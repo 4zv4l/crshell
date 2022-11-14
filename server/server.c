@@ -4,13 +4,15 @@
 #include <sys/socket.h> // accept()
 #include <unistd.h> // write(), read(), ...
 #include "../lib/easysocket.h"
-#define MAX 4048 // 4kb buffer
+#define MAX 4096 // 4kb buffer
+#define EOC "€$§"
 
 // execute given command
-// return the bytes read from stdout
-ssize_t execute(char* buff, ssize_t len) {
+// return 0: failure, 1: success
+static ssize_t
+execute(char* buff, ssize_t len, int connfd) {
 	// copy the buff into the command buffer
-	char cmd[len+1];
+	char cmd[MAX] = {0};
 	strncpy(cmd, buff, len);
 	cmd[len] = '\0';
 
@@ -18,15 +20,17 @@ ssize_t execute(char* buff, ssize_t len) {
 	if(strncmp(cmd, "cd", 2) == 0) {
 		char *path = cmd+3; // cmd+3 => skip this ['c', 'd', ' '] /!\ pointers
 		if(chdir(path)!=0) {
-			return snprintf(buff, MAX, "couldn't change directory\n");
+            return 0;
 		}
-		return snprintf(buff, MAX, "changed dir with success\n");
+		size_t l = snprintf(buff, MAX, "changed dir with success\n");
+        write(connfd, buff, l);
+        return 1;
 	}
 
 	// open a pipe running the command
 	FILE* fp = popen(cmd, "r");
-	if (fp == NULL) {
-		return 1;
+	if (!fp) {
+		return 0;
 	}
 
 	// count how many char is read
@@ -37,19 +41,29 @@ ssize_t execute(char* buff, ssize_t len) {
 	while((c = fgetc(fp))!=EOF) {
 		buff[counter] = c;
 		counter += 1;
-        if(counter == MAX) break;
+        if(counter == MAX) {
+            write(connfd, buff, counter);
+            counter = 0;
+        }
     }
+    // write what remains in the buffer
+    if(counter > 0)
+        write(connfd, buff, counter);
+
+    // send End Of Command
+    write(connfd, EOC, sizeof(EOC));
 
     // close the pipe
     pclose(fp);
 
     // return how many bytes read
-    return counter;
+    return 1;
 }
 
 // Function designed for chat between client and server.
-int handle(int connfd) {
-    char buff[MAX];
+static int
+handle(int connfd) {
+    char buff[MAX] = {0};
     ssize_t bytes;
     // infinite loop for chat
     for (;;) {
@@ -79,16 +93,18 @@ int handle(int connfd) {
 
         // execute the command in buff
         // send the output to connfd
-        bytes = execute(buff, bytes);
-        write(connfd, buff, bytes);
-        if(bytes == 0) { // 0 as return so command not executed
-            write(connfd, "command not found\n", 18);
+        buff[bytes] = 0;
+        int rc = execute(buff, bytes, connfd);
+        if(!rc) {
+            char error[] = "error when running command\n" EOC;
+            write(connfd, error, sizeof(error));
         }
     }
     return 0;
 }
 
-int main(int argc, char **argv){
+extern int
+main(int argc, char **argv){
     // check arguments
     if(argc != 3) {
         printf("Usage: %s [ip] [port]\n", argv[0]);
