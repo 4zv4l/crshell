@@ -10,11 +10,7 @@
 // execute given command
 // return 0: failure, 1: success
 static ssize_t
-execute(char* buff, ssize_t len, int connfd) {
-	// copy the buff into the command buffer
-	char cmd[MAX] = {0};
-	strncpy(cmd, buff, len);
-	cmd[len] = '\0';
+execute(char* cmd, ssize_t len, int connfd) {
 
 	// allow to change the process directory
 	if(strncmp(cmd, "cd", 2) == 0) {
@@ -22,8 +18,9 @@ execute(char* buff, ssize_t len, int connfd) {
 		if(chdir(path)!=0) {
             return 0;
 		}
-		size_t l = snprintf(buff, MAX, "changed dir with success\n");
-        write(connfd, buff, l);
+		size_t l = snprintf(cmd, MAX, "changed dir with success\n");
+        write(connfd, cmd, l);
+        write(connfd, EOC, sizeof(EOC));
         return 1;
 	}
 
@@ -36,8 +33,10 @@ execute(char* buff, ssize_t len, int connfd) {
 	// count how many char is read
 	ssize_t counter = 0;
 
-	// send command stdout to the socket
+	// read stdout from pipe
+    // send it to the client
 	int c;
+	char buff[MAX] = {0};
 	while((c = fgetc(fp))!=EOF) {
 		buff[counter] = c;
 		counter += 1;
