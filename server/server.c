@@ -9,9 +9,8 @@
 
 // execute given command
 // return 0: failure, 1: success
-static size_t
+static int
 execute(char* cmd, size_t len, int connfd) {
-
     // allow to change the process directory
     if(strncmp(cmd, "cd", 2) == 0) {
         char *path = cmd+3; // cmd+3 => skip this ['c', 'd', ' '] /!\ pointers
@@ -60,6 +59,7 @@ execute(char* cmd, size_t len, int connfd) {
 }
 
 // Function designed for chat between client and server.
+// return 0: no shut, 1: shutdown
 static int
 handle(int connfd) {
     char buff[MAX] = {0};
@@ -93,8 +93,7 @@ handle(int connfd) {
         // execute the command in buff
         // send the output to connfd
         buff[bytes] = 0;
-        int rc = execute(buff, bytes, connfd);
-        if(!rc) {
+        if(!execute(buff, bytes, connfd)) {
             char error[] = "error when running command\n" EOC;
             write(connfd, error, sizeof(error));
         }
@@ -132,8 +131,6 @@ main(int argc, char **argv){
         printf("got a client !\n");
 
         // handle client
-        // 0 			=> not shut down
-        // 1 or beyond 	=> shut down
         if(handle(connfd)){break;}
     }
 
