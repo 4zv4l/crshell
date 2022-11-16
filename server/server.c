@@ -9,8 +9,8 @@
 
 // execute given command
 // return 0: failure, 1: success
-static ssize_t
-execute(char* cmd, ssize_t len, int connfd) {
+static size_t
+execute(char* cmd, size_t len, int connfd) {
 
     // allow to change the process directory
     if(strncmp(cmd, "cd", 2) == 0) {
@@ -31,7 +31,7 @@ execute(char* cmd, ssize_t len, int connfd) {
     }
 
     // count how many char is read
-    ssize_t counter = 0;
+    size_t counter = 0;
 
     // read stdout from pipe
     // send it to the client
@@ -63,7 +63,7 @@ execute(char* cmd, ssize_t len, int connfd) {
 static int
 handle(int connfd) {
     char buff[MAX] = {0};
-    ssize_t bytes;
+    size_t bytes;
     // infinite loop for chat
     for (;;) {
         // read the message from client and copy it in buffer
