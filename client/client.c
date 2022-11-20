@@ -14,37 +14,28 @@ handle(int sockfd) {
     char buff[MAX];
     size_t bytes;
     for (;;) {
-        // get user input
         input = readline("$ ");
         if(input[0] == 0) {
             free(input);
             continue;
         }
-
-        // add command to history
         add_history(input);
-
-        // send cmd to socket
         write(sockfd, input, strlen(input));
 
-        // if send exit then close
         if ((strncmp(input, "exit", 4)) == 0) {
             printf("exiting...\n");
             free(input);
             break;
         }
 
-        // if send STOP then close
         if ((strncmp(input, "STOP", 4)) == 0) {
             printf("shutting down the server...\n");
             free(input);
             break;
         }
 
-        // free the non needed input
         free(input);
 
-        // read cmd output from socket
         while(1) {
             bytes = read(sockfd, buff, sizeof(buff));
             char *ptr = strstr(buff, EOC);
@@ -62,7 +53,6 @@ handle(int sockfd) {
 
 extern int
 main(int argc, char **argv) {
-    // check arguments
     if (argc != 3) {
         printf("Usage: %s [ip] [port]\n", argv[0]);
         return 1;
@@ -78,17 +68,15 @@ main(int argc, char **argv) {
     }
     printf("connected to the server..\n");
 
-    // handle send/recv commands
     using_history();
+
     handle(sockfd);
 
-    // free the history
     HISTORY_STATE *myhist = history_get_history_state ();
     HIST_ENTRY **mylist = history_list ();
     for (int i = 0; i < myhist->length; i++) {
         free_history_entry(mylist[i]);
     }
 
-    // close the socket
     close(sockfd);
 }
