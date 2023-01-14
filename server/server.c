@@ -16,7 +16,6 @@ execute(char* cmd, size_t len, int connfd) {
         if(chdir(path)!=0) return 0;
         size_t l = snprintf(cmd, MAX, "changed dir with success\n");
         write(connfd, cmd, l);
-        write(connfd, EOC, sizeof(EOC));
         return 1;
     }
 
@@ -32,7 +31,6 @@ execute(char* cmd, size_t len, int connfd) {
     while((c = fgetc(fp))!=EOF) {
         buff[counter++] = c;
         if(counter == MAX) {
-            //printf("write(%d, %.*s, %ld)\n", connfd, (int)counter-1, buff, counter);
             write(connfd, buff, counter);
             counter = 0;
         }
@@ -40,15 +38,10 @@ execute(char* cmd, size_t len, int connfd) {
 
     // if remains
     if(counter > 0) {
-        //printf("write(%d, %.*s, %ld)\n", connfd, (int)counter-1, buff, counter);
         write(connfd, buff, counter);
     }
-    //printf("write(%d, %s, %ld)\n", connfd, EOC, sizeof(EOC));
-    write(connfd, EOC, sizeof(EOC));
 
-    pclose(fp);
-
-    return 1;
+    return !pclose(fp);
 }
 
 // Function designed for chat between client and server.
@@ -78,13 +71,13 @@ handle(int connfd) {
             return 1;
         }
 
-        printf("%.*s\n", (int)bytes, buff);
-
         buff[bytes] = 0;
         if(!execute(buff, bytes, connfd)) {
-            char error[] = "error when running command\n" EOC;
+            char error[] = "error when running command\n";
             write(connfd, error, sizeof(error));
         }
+        // send end of command
+        write(connfd, EOC, sizeof(EOC));
     }
     return 0;
 }
