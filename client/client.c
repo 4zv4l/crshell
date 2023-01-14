@@ -38,7 +38,12 @@ handle(int sockfd) {
 
         while(1) {
             bytes = read(sockfd, buff, sizeof(buff));
+            buff[bytes] = 0;
+            //printf("[+] got %ld bytes\n", bytes);
+            //printf("[+] %.*s", (int)bytes, buff);
             char *ptr = strstr(buff, EOC);
+            //if (!ptr) printf("[+] didn't send EOC yet\n");
+            //if (ptr) printf("\n[+] got EOC : %p", ptr);
             if(!ptr) {
                 printf("%.*s", (int)bytes, buff);    
             } else {
