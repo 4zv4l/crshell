@@ -11,7 +11,7 @@
 // return 0: failure, 1: success
 static int
 execute(char* cmd, size_t len, int connfd) {
-    if(strncmp(cmd, "cd", 2) == 0) {
+    if(strncmp(cmd, "cd", 2) == 0 && strlen(cmd) >= 4) {
         char *path = cmd+3; // skip ['c', 'd',' ']
         if(chdir(path)!=0) return 0;
         size_t l = snprintf(cmd, MAX, "changed dir with success\n");
@@ -20,6 +20,7 @@ execute(char* cmd, size_t len, int connfd) {
         return 1;
     }
 
+    printf("[+] gonna execute: '%s'\n", cmd);
     FILE* fp = popen(cmd, "r");
     if (!fp) {
         return 0;
@@ -31,14 +32,18 @@ execute(char* cmd, size_t len, int connfd) {
     while((c = fgetc(fp))!=EOF) {
         buff[counter++] = c;
         if(counter == MAX) {
+            //printf("write(%d, %.*s, %ld)\n", connfd, (int)counter-1, buff, counter);
             write(connfd, buff, counter);
             counter = 0;
         }
     }
 
     // if remains
-    if(counter > 0)
+    if(counter > 0) {
+        //printf("write(%d, %.*s, %ld)\n", connfd, (int)counter-1, buff, counter);
         write(connfd, buff, counter);
+    }
+    //printf("write(%d, %s, %ld)\n", connfd, EOC, sizeof(EOC));
     write(connfd, EOC, sizeof(EOC));
 
     pclose(fp);
