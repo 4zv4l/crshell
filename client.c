@@ -48,6 +48,7 @@ main(int argc, char **argv)
         char *cmd = readline("$ ");
         if (!cmd || !cmd[0]) continue;
         if (!send_command(conn, cmd)) break;
+        if (!strcmp("exit", cmd) || !strcmp("stop", cmd)) return 0;
         free(cmd);
         read_result(conn);
     }

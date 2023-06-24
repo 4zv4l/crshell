@@ -90,6 +90,14 @@ main(int argc, char **argv)
             char *cmd = read_command(client, &len);
             if (!cmd || !len) break;
             printf("=> %s\n", cmd);
+            if (!strcmp("exit", cmd)) {
+                free(cmd);
+                break;
+            }
+            if (!strcmp("stop", cmd)) {
+                free(cmd);
+                return 0;
+            }
 
             int ok = execute_send_command(client, cmd);
             free(cmd);
