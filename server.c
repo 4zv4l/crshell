@@ -6,6 +6,7 @@
 
 #define DEFAULT_BUFF 1024
 #define ERROR_CMD "failed to execute\n"
+#define CD_CMD "changed dir with success\n"
 #define MSG_FLAG MSG_NOSIGNAL
 
 /*
@@ -47,6 +48,15 @@ static enum cmd
 execute_send_command(int fd, char *cmd)
 {
     if (!strcmp("exit", cmd)) return CMD_EXIT;
+
+    // handle cd command
+    if (!strncmp("cd", cmd, 2)) {
+        int len = strlen(cmd);
+        if (len < 4) return CMD_FAILED;
+        if (chdir(cmd+3) != 0) return CMD_FAILED;
+        if (send(fd, CD_CMD, strlen(CD_CMD)+1, MSG_FLAG) <= 0) return CMD_EXIT;
+        return CMD_OK;
+    }
 
     // do popen stuff
     FILE *f = popen(cmd, "r");
