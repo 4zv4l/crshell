@@ -4,7 +4,7 @@
 #include <string.h>
 #include "./socket.c"
 
-#define DEFAULT_BUFF 5
+#define DEFAULT_BUFF 1024
 #define ERROR_CMD "failed to execute\n"
 #define CD_CMD "changed dir with success\n"
 #define MSG_FLAG MSG_NOSIGNAL
