@@ -4,7 +4,7 @@
 #include <string.h>
 #include "./socket.c"
 
-#define DEFAULT_BUFF 1024
+#define DEFAULT_BUFF 5
 #define ERROR_CMD "failed to execute\n"
 #define CD_CMD "changed dir with success\n"
 #define MSG_FLAG MSG_NOSIGNAL
@@ -25,7 +25,8 @@ read_command(int fd, int *length)
     for (int i = 0; i <= size && recv(fd, &c, 1, MSG_FLAG) > 0 && c != 0; i++) {
         if (i >= size) {
             buff = realloc(buff, size + DEFAULT_BUFF);
-            if (!buff) return 0;
+            size += DEFAULT_BUFF;
+            if (!buff) return 0;    
         }
         buff[i] = c;
         *length += 1;
