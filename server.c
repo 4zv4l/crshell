@@ -19,18 +19,18 @@ static char *
 read_command(int fd, int *length)
 {
     int size = DEFAULT_BUFF;
-    char *buff = calloc(size, sizeof(char));
+    char *buff = malloc(size);
     if (!buff) return 0;
     char c;
-    for (int i = 0; i <= size && recv(fd, &c, 1, MSG_FLAG) > 0 && c != 0; i++) {
-        if (i >= size) {
+    for (*length = 0; *length <= size && recv(fd, &c, 1, MSG_FLAG) > 0 && c != 0; (*length)++) {
+        if (*length >= size) {
             buff = realloc(buff, size + DEFAULT_BUFF);
             size += DEFAULT_BUFF;
             if (!buff) return 0;    
         }
-        buff[i] = c;
-        *length += 1;
+        buff[*length] = c;
     }
+    buff[*length] = 0;
     return buff;
 }
 
@@ -88,6 +88,8 @@ handle_client(int serv, int client)
         char *cmd = read_command(client, &len);
         if (!cmd || !len) break;
         printf("=> %s\n", cmd);
+
+        // handle special command
         if (!strcmp("exit", cmd)) {
             free(cmd);
             break;
