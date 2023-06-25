@@ -2,7 +2,7 @@
 
 basic remote shell made in C
 
-# Compile and Usage
+## Compile and Usage
 
 - client  
 `cc -lreadline -o client client.c`  
@@ -12,7 +12,7 @@ basic remote shell made in C
 `cc -o server server.c`  
 `Usage: ./server [ip] [port]`
 
-# reserved command
+## reserved command
 
 `exit` will close the connection  
 `stop` will close the connection and stop remote server  
