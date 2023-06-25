@@ -8,7 +8,7 @@ tcp_listen(char *ip, unsigned short int port)
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (!fd) return 0;
 
-    // force resue addr and port (quicker retry)
+    // force reuse addr and port (quicker retry)
     int opt = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
