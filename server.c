@@ -48,6 +48,7 @@ enum cmd {
 static enum cmd
 execute_send_command(int fd, char *cmd)
 {
+    // handle exit command
     if (!strcmp("exit", cmd)) return CMD_EXIT;
 
     // handle cd command
@@ -79,15 +80,44 @@ execute_send_command(int fd, char *cmd)
     return CMD_OK;
 }
 
+static int
+handle_client(int serv, int client)
+{
+    for(;;) {
+        int len = 0;
+        char *cmd = read_command(client, &len);
+        if (!cmd || !len) break;
+        printf("=> %s\n", cmd);
+        if (!strcmp("exit", cmd)) {
+            free(cmd);
+            break;
+        }
+        if (!strcmp("stop", cmd)) {
+            free(cmd);
+            exit(0);
+        }
+
+        int ok = execute_send_command(client, cmd);
+        free(cmd);
+
+        // strlen is safe here since hard coded
+        if (ok == CMD_FAILED) {
+            if (send(client, ERROR_CMD, strlen(ERROR_CMD)+1, MSG_FLAG) <= 0) break;
+        }
+        if (ok == CMD_EXIT) break;
+    }
+    return 0;
+}
+
 extern int
 main(int argc, char **argv)
 {
-    if (argc != 3) return printf("usage: %s [ip] [port]\n", argv[0]);
+    if (argc != 3) return printf("usage: %s [ip] [port]\n", argv[0]), 1;
     char *ip = argv[1];
     unsigned short int port = atoi(argv[2]);
 
     int serv = tcp_listen(ip, port);
-    if (!serv) return perror(""), 1;
+    if (!serv) return perror(""), 2;
     printf("Listening on %s:%d\n", ip, port);
 
     for(;;) {
@@ -95,31 +125,9 @@ main(int argc, char **argv)
         int client = tcp_accept(serv);
         if (client < 0) continue;
         printf("Got client !\n");
+
+        handle_client(serv, client);
         
-        for(;;) {
-            int len = 0;
-            char *cmd = read_command(client, &len);
-            if (!cmd || !len) break;
-            printf("=> %s\n", cmd);
-            if (!strcmp("exit", cmd)) {
-                free(cmd);
-                break;
-            }
-            if (!strcmp("stop", cmd)) {
-                free(cmd);
-                return 0;
-            }
-
-            int ok = execute_send_command(client, cmd);
-            free(cmd);
-
-            // strlen is safe here since hard coded
-            if (ok == CMD_FAILED) {
-                if (send(client, ERROR_CMD, strlen(ERROR_CMD)+1, MSG_FLAG) <= 0) break;
-            }
-            if (ok == CMD_EXIT) break;
-        }
-
         close(client);
         printf("bye\n");
     }

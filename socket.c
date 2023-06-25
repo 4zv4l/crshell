@@ -5,7 +5,6 @@
 extern int
 tcp_listen(char *ip, unsigned short int port)
 {
-    int ret; // will contain potential error code
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (!fd) return 0;
 
