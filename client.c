@@ -15,8 +15,7 @@ static void
 read_result(int fd)
 {
     char c;
-    while(recv(fd, &c, 1, MSG_FLAG) > 0) {
-        if (c == 0) break;
+    while (recv(fd, &c, 1, MSG_FLAG) > 0 && c != 0) {
         printf("%c", c);
     }
 }
